@@ -1,5 +1,4 @@
 #include <BLEPeripheral.h>
-
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -18,8 +17,6 @@ static unsigned long then = millis();
 
 void setup(void)
 {
-	Serial.begin(9600);
-
 	ble.setDeviceName("BLE/DS18B20");
 	ble.setAdvertisedServiceUuid(tempService.uuid());
 	ble.addAttribute(tempService);
@@ -34,7 +31,7 @@ void loop(void)
 {
 	ble.poll();
 	unsigned long now = millis();
-	if (then - now >= 30 * 1000) {
+	if (now - then >= 3 * 1000) {
 		sensors.requestTemperatures();
 		tempCharacteristic.setValue(sensors.getTempCByIndex(0));
 		then = now;
