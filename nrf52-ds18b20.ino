@@ -16,7 +16,7 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
 static unsigned long then = millis();
-static bool _connected = false;
+static int _connected = 0;
 
 void setup(void)
 {
@@ -26,11 +26,14 @@ void setup(void)
 	ble.addAttribute(tempCharacteristic);
 	ble.addAttribute(tempDescriptor);
 	ble.setEventHandler(BLEConnected, [=] (BLECentral &central) {
-		_connected = true;
+		_connected++;
 	});
 	ble.setEventHandler(BLEDisconnected, [=] (BLECentral &central) {
-		_connected = false;
-		sd_nvic_SystemReset();
+		_connected--;
+		if (_connected <= 0) {
+			_connected = 0;
+			sd_nvic_SystemReset();
+		}
 	});
 
 	sensors.begin();
@@ -41,7 +44,7 @@ void loop(void)
 {
 	ble.poll();
 	unsigned long now = millis();
-	if (_connected) {
+	if (_connected > 0) {
 		if (now - then >= 3 * 1000) {
 			sensors.requestTemperatures();
 			tempCharacteristic.setValue(sensors.getTempCByIndex(0));
